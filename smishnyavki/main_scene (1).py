@@ -25,7 +25,7 @@ class Game(arcade.Window):
         super().__init__(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT, SCREEN_TITLE, resizable=True)
 
         self.background = None
-        self.background = arcade.load_texture("./assets/hahaha.jpg")
+        self.background = arcade.load_texture("assets/hahaha.jpg")
 
 
         # Инициализация переменных игры
@@ -150,11 +150,30 @@ class Game(arcade.Window):
         super().on_resize(max(width, MIN_SCREEN_WIDTH), max(height, MIN_SCREEN_HEIGHT))
         self.update_layout()
 
+    def draw_background_cover(self, texture, window_width, window_height):
+        window_ratio = window_width / window_height
+        texture_ratio = texture.width / texture.height
+
+        if window_ratio > texture_ratio:
+            scale = window_width / texture.width
+            draw_width = window_width
+            draw_height = texture.height * scale
+            x = 0
+            y = (window_height - draw_height) / 2
+        else:
+            scale = window_height / texture.height
+            draw_width = texture.width * scale
+            draw_height = window_height
+            x = (window_width - draw_width) / 2
+            y = 0
+
+        arcade.draw_lrwh_rectangle_textured(
+            x, y, draw_width, draw_height, texture
+        )
+
     def on_draw(self):
         arcade.start_render()
-        arcade.draw_lrwh_rectangle_textured(0, 0,
-                                            MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT,
-                                            self.background)
+        self.draw_background_cover(self.background, self.width, self.height)
         screen_width = max(self.width, MIN_SCREEN_WIDTH)
         screen_height = max(self.height, MIN_SCREEN_HEIGHT)
 
