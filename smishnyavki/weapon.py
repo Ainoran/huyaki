@@ -30,13 +30,11 @@ class Weapon:
         self.crithmodifier = 3
         self.attackspeed = 80
         self.cost = self.damage *3 +self.crit*100+self.attackspeed*2
-
-
-
-
-
-
-
+        self.isbought = 0
+        if self.rarity>=3:
+            self.haveanability = 1
+        else:
+            self.haveanability = 0
 
 
 
