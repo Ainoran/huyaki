@@ -25,6 +25,7 @@ class Weapon:
             self.lvl = 1
         elif self.lvl >11:
             self.lvl = 11
+        self.rarity = r.randint(0, 5)
         self.damage = player.lvl*0.5+self.lvl*(r.randint(4,8)/2)
         self.crit = r.randint(10,20)/100 + self.lvl*0.02
         self.crithmodifier = 3
