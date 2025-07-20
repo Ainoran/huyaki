@@ -6,6 +6,7 @@ import asyncio
 from potion import Potion
 from weapon import Weapon
 from armor import Armor
+from world import WorldManager
 
 # Константы
 MIN_SCREEN_WIDTH = 800
@@ -25,8 +26,10 @@ class Game(arcade.Window):
         super().__init__(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT, SCREEN_TITLE, resizable=True)
 
         self.background = None
+        self.in_world_mode = False
+        self.world_view = None
         try:
-            self.background = arcade.load_texture("assets/hahaha.jpg")
+            self.background = arcade.load_texture("assets/bg.png")
         except:
             # Если текстура не найдена, создаем простой цветной фон
             self.background = None
@@ -35,6 +38,8 @@ class Game(arcade.Window):
         # Инициализация UI Manager
         self.manager = arcade.gui.UIManager()
         self.manager.enable()
+
+        self.world_manager = WorldManager(self)
 
         # Инициализация переменных игры
         self.initgame()
@@ -159,7 +164,7 @@ class Game(arcade.Window):
         self.button_panel = arcade.gui.UIBoxLayout(vertical=False, space_between=10)
 
         # Кнопка "Продолжить"
-        continue_style = {
+        button_style = {
             "font_name": ("calibri", "arial"),
             "font_size": 14,
             "font_color": arcade.color.WHITE,
@@ -171,11 +176,12 @@ class Game(arcade.Window):
             "font_color_pressed": arcade.color.WHITE,
         }
 
+
         self.continue_button = arcade.gui.UIFlatButton(
             text="Продолжить",
             width=120,
             height=40,
-            style=continue_style
+            style=button_style
         )
         self.continue_button.on_click = self.on_continue_click
 
@@ -184,14 +190,24 @@ class Game(arcade.Window):
             text="Да",
             width=80,
             height=40,
-            style=continue_style
+            style=button_style
         )
         self.yes_button.on_click = self.on_yes_click
         self.yes_button.visible = False
 
+        # Кнопка "Войти в мир"
+        self.world_button = arcade.gui.UIFlatButton(
+            text="Войти в мир",
+            width=120,
+            height=40,
+            style=button_style
+        )
+        self.world_button.on_click = self.on_world_button_click
+
         # Добавляем кнопки в панель
         self.button_panel.add(self.continue_button)
         self.button_panel.add(self.yes_button)
+        self.button_panel.add(self.world_button)
 
         # Создаем контейнер для кнопок внизу экрана
         self.button_anchor = arcade.gui.UIAnchorWidget(
@@ -295,6 +311,10 @@ class Game(arcade.Window):
     def on_draw(self):
         arcade.start_render()
 
+        if self.in_world_mode and self.world_view:
+            self.world_view.on_draw()
+            return
+
         # Рисуем фон
         if self.background:
             self.draw_background_cover(self.background, self.width, self.height)
@@ -390,6 +410,10 @@ class Game(arcade.Window):
             self.game_started = True
 
         self.handle_continue()
+
+    def on_world_button_click(self, event):
+        """Обработчик кнопки входа в мир"""
+        self.world_manager.enter_world_mode()
 
     def on_yes_click(self, event):
         """Обработчик нажатия кнопки 'Да'"""
