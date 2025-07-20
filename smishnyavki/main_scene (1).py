@@ -302,7 +302,7 @@ class Game(arcade.Window):
         self.narrative_text.append(self.current_event)
         self.yes_button["visible"] = self.current_event in [self.events[8], self.events[20]]
         if self.current_event in [self.events[3], self.events[4]]:
-            if random.random() < 0.2:
+            if random.random() < 0.8:
                 item = random.choice([
                     Potion("Малое зелье", 10),
                     Weapon("Меч", 6),
