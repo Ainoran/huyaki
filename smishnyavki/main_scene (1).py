@@ -297,6 +297,8 @@ class Game(arcade.Window):
         if not self.game_started:
             return
         self.current_event = random.choice(self.events)
+        if self.current_event == '':
+            self.current_event = random.choice(self.events)
         self.narrative_text.append(self.current_event)
         self.yes_button["visible"] = self.current_event in [self.events[8], self.events[20]]
         if self.current_event in [self.events[3], self.events[4]]:
