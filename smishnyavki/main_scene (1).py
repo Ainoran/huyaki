@@ -3,6 +3,9 @@ import arcade.gui
 import random
 import platform
 import asyncio
+
+
+
 from potion import Potion
 from weapon import Weapon
 from armor import Armor
@@ -81,7 +84,7 @@ class Game(arcade.Window):
 
     def initgame(self):
         """Инициализация игровых переменных"""
-        self.enemylvldefined = 0
+        self.enemylvldefined = 0 #половина под снос
         self.map = 0
         self.critch = 10
         self.maxhealth = 25
@@ -145,7 +148,7 @@ class Game(arcade.Window):
             self.music_player = arcade.play_sound(
                 sound,
                 looping=True,  # Зацикливаем музыку
-                volume=0.5  # Громкость (0.0-1.0)
+                volume=0.5  # Громкость (0.0-1.0) # Блин вот бы еще регулировку сделать
             )
         except Exception as e:
             print(f"Ошибка при загрузке музыки: {e}")
