@@ -19,6 +19,8 @@ class Weapon:
     weapontypes = ['melee','longmelee', 'range', 'magic', 'specific', 'differentive']
     def genermelee(self):
         weaponsnames = ['Кортик', "Кинжал", "Стилет", 'Нож', 'Топор']
+        weaponrars = ['Дряхлый', "Простой", 'Прочный', 'Эпический', 'Легенадрный', 'Уникальный']
+
         self.name = r.choice(weaponsnames)
         self.lvl = player.level + r.randint(-2, 3)
         if self.lvl <= 0:
