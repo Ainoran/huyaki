@@ -31,6 +31,7 @@ class Game(arcade.Window):
             # Если текстура не найдена, создаем простой цветной фон
             self.background = None
 
+
         # Инициализация UI Manager
         self.manager = arcade.gui.UIManager()
         self.manager.enable()
@@ -60,6 +61,19 @@ class Game(arcade.Window):
         self.yes_button = None
         self.inventory_buttons = []
 
+        self.music = {
+            "ambient": "DnD Calm Fantasy Music for Adventure and Exploration _ 3 Hour Mix for Dungeons & Dragons.mp3",
+            "tavern": "Reverse Dance. Medieval Dance. Hurdy-Gurdy, Organ & Drum.mp3",
+            "epic": "Fantasy Celtic Music - Spirit of the Wild.mp3"
+        }
+
+        # Полные пути к файлам (предполагая, что они в папке assets/music)
+        for key in self.music:
+            self.music[key] = f"music/{self.music[key]}"
+
+        self.current_music = None
+        self.music_player = None
+
         # Параметры масштабирования
         self.font_size_base = 12
 
@@ -87,7 +101,7 @@ class Game(arcade.Window):
 
         # Список событий (mv1-mv20)
         self.events = [
-            ''
+            '',
             "Ты видишь небольшой храм или святилище посреди леса. Здесь можно хорошо отдохнуть и восстановить силы.",#1
             "Наступила плохая погода. В густых тропинках ты не заметила корень дерева и споткнулся об него.",
             "Ты встретила сундук посредине поляны, рядом была табличка с надписью: 'Впереди - мимик'",
@@ -109,6 +123,32 @@ class Game(arcade.Window):
             "Внезапно ты почувствовала жуткую усталость. Вокруг тебя совсем тихо и только деревья.",
             "Из ниоткуда подошла девочка и спросила\n-Тётенька, а это не вы меня спасли тогда?"
         ]
+
+    def play_music(self, music_type):
+        """Воспроизводит выбранную музыку, останавливая предыдущую"""
+        # Проверяем, что тип музыки есть в словаре
+        if music_type not in self.music:
+            return
+
+        # Если тип музыки совпадает с текущим, ничего не делаем
+        if music_type == self.current_music:
+            return
+
+        # Останавливаем текущую музыку если она играет
+        if self.music_player:
+            self.music_player.stop()
+
+        # Загружаем и проигрываем новую музыку
+        self.current_music = music_type
+        try:
+            sound = arcade.load_sound(self.music[music_type])
+            self.music_player = arcade.play_sound(
+                sound,
+                looping=True,  # Зацикливаем музыку
+                volume=0.5  # Громкость (0.0-1.0)
+            )
+        except Exception as e:
+            print(f"Ошибка при загрузке музыки: {e}")
 
     def setup_ui(self):
         """Настройка UI элементов"""
@@ -216,6 +256,8 @@ class Game(arcade.Window):
     def setup(self):
         self.narrative_text = [f"{self.username} ты проснулась на опушке леса и пошла куда глаза глядят"]
         self.game_started = False
+
+        self.play_music("ambient")
 
     def on_resize(self, width, height):
         super().on_resize(max(width, MIN_SCREEN_WIDTH), max(height, MIN_SCREEN_HEIGHT))
@@ -436,6 +478,14 @@ class Game(arcade.Window):
 
     def meetctshop(self):
         pass
+
+    def enter_shop(self):
+        # Переключаем на музыку таверны
+        self.play_music("tavern")
+
+    def exit_shop(self):
+        # Возвращаем фоновую музыку
+        self.play_music("ambient")
 
 
 async def main():
