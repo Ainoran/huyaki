@@ -153,7 +153,7 @@ class Game(arcade.Window):
             self.music_player = arcade.play_sound(
                 sound,
                 looping=True,  # Зацикливаем музыку
-                volume=0.5  # Громкость (0.0-1.0) # Блин вот бы еще регулировку сделать
+                volume=0.2  # Громкость (0.0-1.0) # Блин вот бы еще регулировку сделать
             )
         except Exception as e:
             print(f"Ошибка при загрузке музыки: {e}")
