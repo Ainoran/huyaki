@@ -1,8 +1,8 @@
 import random as r
-from player import Player, player
-
+from player import player
 class Weapon:
-    def __init__(self, weapontype='melee', lvl=1, rarity = 0, name='emty', damage=0, crit=0, critmodifier=0, speed = 0.1, cost=0, ib=0, ha = 0):
+    def __init__(self, weapontype='melee', lvl=1, rarity = 0, name='emty', damage=0, crit=0, critmodifier=0,
+                 speed = 0.1, cost=0, ib=0, ha = 0):
         self.weapontype = weapontype
         self.lvl = lvl
         self.rarity = rarity
@@ -15,14 +15,13 @@ class Weapon:
         self.isbought = ib
         self.haveanability = ha
 
-    weaponrarsnames = ['Дряхлый', "Простой", 'Прочный']
     weapontypes = ['melee','longmelee', 'range', 'magic', 'specific', 'differentive']
     def genermelee(self):
         weaponsnames = ['Кортик', "Кинжал", "Стилет", 'Нож', 'Топор']
         weaponrars = ['Дряхлый', "Простой", 'Прочный', 'Эпический', 'Легенадрный', 'Уникальный']
 
         self.name = r.choice(weaponsnames)
-        self.lvl = player.level + r.randint(-2, 3)
+        self.lvl = player.lvl + r.randint(-2, 3)
         if self.lvl <= 0:
             self.lvl = 1
         elif self.lvl >11:
@@ -38,7 +37,6 @@ class Weapon:
             self.haveanability = 1
         else:
             self.haveanability = 0
-
 
 
     def generlongmelee(self):
@@ -111,12 +109,17 @@ class Weapon:
 
         pass
 
+    def generate(self):
+        if self.weapontype == 'melee':
+            self.genermelee()
 
 
 
-
-    def use(self, game):
-        game.damage = self.damage
+    def use(self, game, player):
+        player.damage = self.damage
         game.narrative_text.append(f"Экипировано {self.name}: урон теперь {self.damage}")
+
+
+
     def __str__(self):
         return f"{self.name} (Урон: {self.damage})"

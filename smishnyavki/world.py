@@ -179,8 +179,8 @@ class World2D:
 
 
 class FightSystem:
-    def __init__(self, player_stats):
-        self.player_stats = player_stats
+    def __init__(self, player):
+        self.player_stats = player
         self.enemy = None
         self.fight_log = []
         self.player_turn = True
@@ -325,7 +325,9 @@ class FightSystem:
         # Наносим урон игроку
         actual_damage = max(1, damage - self.player_stats.armor)
         self.player_stats.health -= actual_damage
-        self.fight_log.append(f"{self.enemy.name} наносит тебе {actual_damage} урона")
+        health = self.player_stats.health
+        self.fight_log.append(f"{self.enemy.name} наносит тебе {actual_damage} урона, у тебя {health} здоровья")
+
 
         if self.player_stats.health <= 0:
             self.end_fight(victory=False)
@@ -350,9 +352,9 @@ class FightSystem:
             # Шанс на предмет
             if random.random() < 0.3:
                 items = [
-                    Potion("Зелье здоровья", random.randint(10, 20)),
-                    Weapon(f"Оружие ур.{self.enemy.level}", self.player_stats.damage + random.randint(1, 3)),
-                    Armor(f"Броня ур.{self.enemy.level}", self.player_stats.armor + random.randint(1, 2))
+                    Potion("Зелье здоровья"),
+                    Weapon(f"Оружие ур.{self.enemy.level}",),
+                    Armor(f"Броня ур.{self.enemy.level}")
                 ]
                 item = random.choice(items)
                 self.player_stats.inventory.append(item)
@@ -690,9 +692,9 @@ class WorldView(arcade.View):
 
         if treasure_type in ["item", "both"]:
             items = [
-                Potion("Большое зелье здоровья", random.randint(20, 40)),
-                Weapon(f"Магическое оружие", self.game_window.damage + random.randint(2, 5)),
-                Armor(f"Зачарованная броня", self.game_window.armor + random.randint(2, 4))
+                Potion("Большое зелье здоровья"),
+                Weapon(f"Магическое оружие"),
+                Armor(f"Зачарованная броня")
             ]
             item = random.choice(items)
             self.game_window.inventory.append(item)
@@ -707,7 +709,7 @@ class WorldView(arcade.View):
         if self.game_window.money >= 50:
             choice = random.choice(["health", "weapon", "armor"])
             if choice == "health":
-                potion = Potion("Зелье торговца", 25)
+                potion = Potion("Зелье торговца")
                 self.game_window.inventory.append(potion)
                 self.game_window.money -= 50
                 self.game_window.narrative_text.append("Ты покупаешь зелье за 50 золота")
@@ -717,7 +719,7 @@ class WorldView(arcade.View):
                 self.game_window.money -= 50
                 self.game_window.narrative_text.append("Ты покупаешь оружие за 50 золота")
             else:
-                armor = Armor("Броня торговца", self.game_window.armor + 1)
+                armor = Armor("Броня торговца")
                 self.game_window.inventory.append(armor)
                 self.game_window.money -= 50
                 self.game_window.narrative_text.append("Ты покупаешь броню за 50 золота")
