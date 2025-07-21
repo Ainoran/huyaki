@@ -280,7 +280,7 @@ class Game(arcade.Window):
 
     def on_resize(self, width, height):
         super().on_resize(max(width, MIN_SCREEN_WIDTH), max(height, MIN_SCREEN_HEIGHT))
-        # UI Manager автоматически обработает изменение размера
+        self.set_min_size(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT) #минимальный размер окна
 
     def draw_background_cover(self, texture, window_width, window_height):
         if texture is None:
