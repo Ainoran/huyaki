@@ -23,27 +23,23 @@ COLOR_BUTTON = arcade.color.LIGHT_BLUE
 COLOR_BUTTON_HOVER = arcade.color.SKY_BLUE
 
 
-class Game(arcade.Window):
-    def __init__(self):
-        super().__init__(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT, SCREEN_TITLE, resizable=True)
 
-        self.background = None
-        self.in_world_mode = False
-        self.world_view = None
-        try:
-            self.background = arcade.load_texture("assets/bg.png")
-        except:
-            # Если текстура не найдена, создаем простой цветной фон
-            self.background = None
+class Game(arcade.View):
+    def __init__(self, window):
+        super().__init__(window)
 
-
-        # Инициализация UI Manager
         self.manager = arcade.gui.UIManager()
         self.manager.enable()
 
+        self.in_world_mode = False
+        self.world_view = None
         self.world_manager = WorldManager(self)
 
-        # Инициализация переменных игры
+        try:
+            self.background = arcade.load_texture("assets/bg.png")
+        except:
+            self.background = None
+
         self.initgame()
 
         # Состояние игры
@@ -314,13 +310,14 @@ class Game(arcade.Window):
 
         # Рисуем фон
         if self.background:
-            self.draw_background_cover(self.background, self.width, self.height)
+            self.draw_background_cover(self.background, self.window.width, self.window.height)
         else:
-            arcade.draw_rectangle_filled(self.width // 2, self.height // 2,
-                                         self.width, self.height, arcade.color.DARK_GREEN)
+            arcade.draw_rectangle_filled(self.window.width // 2, self.window.height // 2,
+                                         self.window.width, self.window.height,
+                                         arcade.color.DARK_GREEN)
 
-        screen_width = max(self.width, MIN_SCREEN_WIDTH)
-        screen_height = max(self.height, MIN_SCREEN_HEIGHT)
+        screen_width = max(self.window.width, MIN_SCREEN_WIDTH)
+        screen_height = max(self.window.height, MIN_SCREEN_HEIGHT)
 
         # Панель статистики
         stats_width = screen_width * 0.35
@@ -525,8 +522,8 @@ async def main():
     arcade.run()
 
 
-if platform.system() == "Emscripten":
-    asyncio.ensure_future(main())
-else:
-    if __name__ == "__main__":
-        asyncio.run(main())
+# if platform.system() == "Emscripten":
+#     asyncio.ensure_future(main())
+# else:
+#     if __name__ == "__main__":
+#         asyncio.run(main())

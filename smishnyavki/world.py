@@ -759,11 +759,8 @@ class WorldManager:
             self.main_game.world_view = WorldView(self.main_game)
 
         self.main_game.in_world_mode = True
-
-        # Отключаем UI менеджер текстовой игры
         self.main_game.manager.disable()
-
-        self.main_game.show_view(self.main_game.world_view)  # ← ВАЖНО!
+        self.main_game.window.show_view(self.main_game.world_view)
 
         if hasattr(self.main_game, 'play_music'):
             self.main_game.play_music("ambient")
