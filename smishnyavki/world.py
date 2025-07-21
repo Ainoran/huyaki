@@ -146,6 +146,7 @@ class World2D:
         return True
 
     def move_player(self, dx: float, dy: float):
+        print(f"Player at: ({self.player_x}, {self.player_y})")
         """Перемещает игрока с проверкой границ"""
         new_x = max(20, min(self.width - 20, self.player_x + dx * self.player_speed))
         new_y = max(20, min(self.height - 20, self.player_y + dy * self.player_speed))
@@ -596,6 +597,7 @@ class WorldView(arcade.View):
             dx = 1
 
         if not self.in_fight and (dx != 0 or dy != 0):
+            print(f"Moving dx={dx}, dy={dy}")
             self.world.move_player(dx, dy)
             self.world.discover_nearby_locations()
 
@@ -610,6 +612,7 @@ class WorldView(arcade.View):
 
     def on_key_press(self, key, modifiers):
         self.keys_pressed.add(key)
+        print("Key pressed:", key)  # Тест
 
         # Взаимодействие с локациями
         if key == arcade.key.E and not self.in_fight:
@@ -620,6 +623,7 @@ class WorldView(arcade.View):
             self.end_fight()
 
     def on_key_release(self, key, modifiers):
+        print("Key unpressed:", key)  # Тест
         if key in self.keys_pressed:
             self.keys_pressed.remove(key)
 
@@ -751,12 +755,13 @@ class WorldManager:
         """Переход в режим 2D мира"""
         if not self.main_game.world_view:
             self.main_game.world_view = WorldView(self.main_game)
-            self.main_game.world_view.setup()
 
         self.main_game.in_world_mode = True
 
         # Отключаем UI менеджер текстовой игры
         self.main_game.manager.disable()
+
+        self.main_game.show_view(self.main_game.world_view)  # ← ВАЖНО!
 
         if hasattr(self.main_game, 'play_music'):
             self.main_game.play_music("ambient")
