@@ -1,3 +1,6 @@
+from playerdata import player
+import random as r
+
 class Enemy():
     def __init__(self,name='empty', health=0, damage=0, level=1, armor=0):
         self.name = name
@@ -22,10 +25,6 @@ class Enemy():
         self.name = enemy_data[0]
         self.health = enemy_data[1]
         self.damage = enemy_data[2]
-
-
-
-
 
     def take_damage(self, damage: int) -> int:
         actual_damage = max(1, damage - player.armor)

@@ -41,6 +41,7 @@ class MainMenuView(arcade.View):
                          arcade.color.WHITE, font_size=32, anchor_x="center")
         self.manager.draw()
 
+
     def on_play_click(self, event):
         game = Game(self.window)
         self.window.show_view(game)

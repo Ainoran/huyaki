@@ -1,5 +1,5 @@
 import random as r
-from player import player
+from playerdata import player
 class Weapon:
     def __init__(self, weapontype='melee', lvl=1, rarity = 0, name='emty', damage=0, crit=0, critmodifier=0,
                  speed = 0.1, cost=0, ib=0, ha = 0):
@@ -21,7 +21,7 @@ class Weapon:
         weaponrars = ['Дряхлый', "Простой", 'Прочный', 'Эпический', 'Легенадрный', 'Уникальный']
 
         self.name = r.choice(weaponsnames)
-        self.lvl = player.lvl + r.randint(-2, 3)
+        self.lvl = player.lvl + r.randint(0, 3)
         if self.lvl <= 0:
             self.lvl = 1
         elif self.lvl >11:

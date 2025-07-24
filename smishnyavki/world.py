@@ -8,7 +8,8 @@ from typing import List, Tuple, Optional
 from potion import Potion
 from weapon import Weapon
 from armor import Armor
-
+from playerdata import player
+from enemydata import Enemy
 
 class LocationType(Enum):
     FOREST = "forest"
@@ -55,24 +56,6 @@ class WorldLocation:
             LocationType.BOSS: arcade.color.RED
         }
         return color_map.get(self.location_type, arcade.color.WHITE)
-
-
-class Enemy:
-    def __init__(self, name: str, health: int, damage: int, level: int = 1):
-        self.name = name
-        self.max_health = health
-        self.health = health
-        self.damage = damage
-        self.level = level
-        self.armor = max(0, level - 1)
-
-    def take_damage(self, damage: int) -> int:
-        actual_damage = max(1, damage - self.armor)
-        self.health -= actual_damage
-        return actual_damage
-
-    def is_alive(self) -> bool:
-        return self.health > 0
 
 
 class World2D:
@@ -148,8 +131,8 @@ class World2D:
     def move_player(self, dx: float, dy: float):
         print(f"Player at: ({self.player_x}, {self.player_y})")
         """Перемещает игрока с проверкой границ"""
-        new_x = max(20, min(self.width - 20, self.player_x + dx * self.player_speed))
-        new_y = max(20, min(self.height - 20, self.player_y + dy * self.player_speed))
+        new_x = max(20, min(self.width - 20, self.player_x + int(dx) * self.player_speed))
+        new_y = max(20, min(self.height - 20, self.player_y + int(dy) * self.player_speed))
 
         self.player_x = new_x
         self.player_y = new_y
@@ -179,46 +162,36 @@ class World2D:
 
 
 class FightSystem:
-    def __init__(self, player):
-        self.player_stats = player
-        self.enemy = None
+    def __init__(self):
+        self.enemy = Enemy()
         self.fight_log = []
         self.player_turn = True
         self.fight_active = False
-        self.enemy_types = {
-            1: [("Волк", 15, 3), ("Гоблин", 12, 4), ("Слизень", 10, 2)],
-            2: [("Орк", 25, 6), ("Скелет", 20, 5), ("Медведь", 30, 7)],
-            3: [("Огр", 40, 10), ("Призрак", 35, 8), ("Тролль", 45, 9)],
-            4: [("Дракончик", 60, 12), ("Демон", 55, 14), ("Голем", 70, 10)],
-            5: [("Древний Дракон", 100, 20), ("Король Личей", 90, 18), ("Титан", 120, 16)]
-        }
 
-    def start_fight(self, enemy_level: int = 1):
+
+    def start_fight(self):
         """Начинает бой с врагом указанного уровня"""
-        enemy_level = max(1, min(5, enemy_level))
-        enemy_data = random.choice(self.enemy_types[enemy_level])
-
-        self.enemy = Enemy(enemy_data[0], enemy_data[1], enemy_data[2], enemy_level)
+        self.enemy.generate()
         self.fight_log = [f"Началась битва с {self.enemy.name}!"]
         self.fight_active = True
         self.player_turn = True
         return self.enemy
 
     def player_attack(self):
+
         """Обычная атака игрока"""
         if not self.fight_active or not self.player_turn:
             return False
 
-        damage = self.player_stats.damage
+        damage_in_this_turn = player.damage
 
         # Проверка критического удара
-        if random.random() * 100 < self.player_stats.critch:
-            damage *= 2
+        if random.random() * 100 < player.critch:
+            damage_in_this_turn *= 2
             crit_text = " (КРИТИЧЕСКИЙ УДАР!)"
         else:
             crit_text = ""
-
-        actual_damage = self.enemy.take_damage(damage)
+        actual_damage = self.enemy.take_damage(damage_in_this_turn)
         self.fight_log.append(f"Ты наносишь {actual_damage} урона{crit_text}")
 
         if not self.enemy.is_alive():
@@ -233,17 +206,17 @@ class FightSystem:
         if not self.fight_active or not self.player_turn:
             return False
 
-        base_damage = self.player_stats.damage
+        base_damage = player.damage
 
         # Шанс удвоения урона
-        if random.random() * 100 < self.player_stats.critch:
+        if random.random() * 100 < player.critch:
             damage = base_damage * 2
             self.fight_log.append("Мощная атака удалась!")
         else:
             damage = base_damage
 
         # Проверка обычного крита поверх мощной атаки
-        if random.random() * 100 < self.player_stats.critch:
+        if random.random() * 100 < player.critch:
             damage *= 2
             self.fight_log.append("НЕВЕРОЯТНЫЙ КРИТИЧЕСКИЙ УДАР!")
 
@@ -323,13 +296,13 @@ class FightSystem:
                         return
 
         # Наносим урон игроку
-        actual_damage = max(1, damage - self.player_stats.armor)
-        self.player_stats.health -= actual_damage
-        health = self.player_stats.health
+        actual_damage = max(1, damage - player.armor)
+        player.health -= actual_damage
+        health = player.health
         self.fight_log.append(f"{self.enemy.name} наносит тебе {actual_damage} урона, у тебя {health} здоровья")
 
 
-        if self.player_stats.health <= 0:
+        if player.health <= 0:
             self.end_fight(victory=False)
             return
 
@@ -346,7 +319,7 @@ class FightSystem:
             exp_reward = self.enemy.level * 10
             gold_reward = random.randint(10, 30) * self.enemy.level
 
-            self.player_stats.money += gold_reward
+            player.money += gold_reward
             self.fight_log.append(f"Победа! Ты получаешь {gold_reward} монет")
 
             # Шанс на предмет
@@ -357,12 +330,12 @@ class FightSystem:
                     Armor(f"Броня ур.{self.enemy.level}")
                 ]
                 item = random.choice(items)
-                self.player_stats.inventory.append(item)
                 self.fight_log.append(f"Ты находишь {item.name}!")
         else:
             self.fight_log.append("Поражение... Ты теряешь сознание")
             # При поражении восстанавливаем немного здоровья и телепортируем в начало
-            self.player_stats.health = max(1, self.player_stats.maxhealth // 4)
+            player.health = max(1, player.maxhealth // 4)
+
 
 
 class WorldView(arcade.View):
@@ -370,8 +343,8 @@ class WorldView(arcade.View):
         super().__init__()
         self.game_window = game_window
         self.world = World2D()
-        self.fight_system = FightSystem(game_window)
-
+        self.fight_system = FightSystem()
+        self.player = player
         # UI менеджер для кнопок боя
         self.manager = arcade.gui.UIManager()
         self.manager.enable()
@@ -638,9 +611,9 @@ class WorldView(arcade.View):
         self.current_location = nearby
 
         if nearby.event_type == EventType.FIGHT:
-            self.start_fight(random.randint(1, 3))
+            self.start_fight()
         elif nearby.event_type == EventType.BOSS_FIGHT:
-            self.start_fight(random.randint(4, 5))
+            self.start_fight()
         elif nearby.event_type == EventType.HEALING:
             self.handle_healing(nearby)
         elif nearby.event_type == EventType.TREASURE:
@@ -650,11 +623,11 @@ class WorldView(arcade.View):
 
         nearby.completed = True
 
-    def start_fight(self, enemy_level):
+    def start_fight(self, leveldefined = False):        #Дописать конструктор определнного уровня
         """Начинает бой"""
         self.in_fight = True
         self.fight_anchor.visible = True
-        enemy = self.fight_system.start_fight(enemy_level)
+        self.fight_system.start_fight()
 
         # Останавливаем фоновую музыку и включаем боевую
         if hasattr(self.game_window, 'play_music'):
@@ -687,7 +660,7 @@ class WorldView(arcade.View):
 
         if treasure_type in ["money", "both"]:
             gold = random.randint(20, 100)
-            self.game_window.money += gold
+            player.money += gold
             self.game_window.narrative_text.append(f"Ты находишь {gold} золота!")
 
         if treasure_type in ["item", "both"]:
@@ -706,22 +679,22 @@ class WorldView(arcade.View):
         self.game_window.narrative_text.append(f"Добро пожаловать в {location.name}!")
 
         # Простой автоматический магазин для примера
-        if self.game_window.money >= 50:
+        if player.money >= 50:
             choice = random.choice(["health", "weapon", "armor"])
             if choice == "health":
-                potion = Potion("Зелье торговца")
+                potion = Potion()
                 self.game_window.inventory.append(potion)
-                self.game_window.money -= 50
+                player.money -= 50
                 self.game_window.narrative_text.append("Ты покупаешь зелье за 50 золота")
             elif choice == "weapon":
-                weapon = Weapon("Оружие торговца", self.game_window.damage + 2)
+                weapon = Weapon()
                 self.game_window.inventory.append(weapon)
-                self.game_window.money -= 50
+                player.money -= 50
                 self.game_window.narrative_text.append("Ты покупаешь оружие за 50 золота")
             else:
-                armor = Armor("Броня торговца")
+                armor = Armor()
                 self.game_window.inventory.append(armor)
-                self.game_window.money -= 50
+                player.money -= 50
                 self.game_window.narrative_text.append("Ты покупаешь броню за 50 золота")
         else:
             self.game_window.narrative_text.append("У тебя недостаточно золота для покупок")

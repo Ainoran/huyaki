@@ -7,7 +7,7 @@ import asyncio
 from potion import Potion
 from weapon import Weapon
 from armor import Armor
-from player import player
+from playerdata import player
 from world import WorldManager
 
 # Константы
@@ -86,7 +86,7 @@ class Game(arcade.View):
         """Инициализация игровых переменных"""
         self.enemylvldefined = 0 #половина под снос
         self.map = 0
-        self.critch = 10
+
 
         self.enemycounter = 0
         self.keygirl = 0
@@ -268,10 +268,6 @@ class Game(arcade.View):
         self.game_started = False
 
         self.play_music("ambient")
-
-    def on_resize(self, width, height):
-        super().on_resize(max(width, MIN_SCREEN_WIDTH), max(height, MIN_SCREEN_HEIGHT))
-        self.set_min_size(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT) #минимальный размер окна
 
     def draw_background_cover(self, texture, window_width, window_height):
         if texture is None:
@@ -456,7 +452,7 @@ class Game(arcade.View):
                     item.generate()
                 elif itemtype == 2:
                     item = Potion()
-                elif itemtype == 3:
+                else:
                     item = Armor()
 
                 # item = random.choice([
