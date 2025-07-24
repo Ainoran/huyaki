@@ -1,5 +1,5 @@
 class Player():
-    def __init__(self, name='', lvl=1, damage=25, hp=100, armor = 0, money = 100, critch = 10, maxhealth = 25):
+    def __init__(self, name='', lvl=1, damage=25, hp=100, armor = 0, money = 100, critch = 10, maxhealth = 100):
         self.name = name
         self.lvl = lvl
         self.damage = damage

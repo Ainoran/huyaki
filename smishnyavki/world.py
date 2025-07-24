@@ -10,6 +10,7 @@ from weapon import Weapon
 from armor import Armor
 from playerdata import player
 from enemydata import Enemy
+from eventsdata import Event
 
 class LocationType(Enum):
     FOREST = "forest"
@@ -129,7 +130,6 @@ class World2D:
         return True
 
     def move_player(self, dx: float, dy: float):
-        print(f"Player at: ({self.player_x}, {self.player_y})")
         """Перемещает игрока с проверкой границ"""
         new_x = max(20, min(self.width - 20, self.player_x + int(dx) * self.player_speed))
         new_y = max(20, min(self.height - 20, self.player_y + int(dy) * self.player_speed))
@@ -160,7 +160,20 @@ class World2D:
             if dist <= radius:
                 location.discovered = True
 
+class EventSystem:
+    def __init__(self):
+        self.event = Event()
+        self.event_log = []
+        self.player_turn_in_event = True
+        self.event_active = False
+    def start_event(self):
+        self.event.generate()
+        self.event_log = [self.event.desc]
+        self.event_active = True
+        self.player_turn_in_event = True
 
+    def end_event(self):
+        self.event_active = False
 class FightSystem:
     def __init__(self):
         self.enemy = Enemy()
@@ -169,13 +182,14 @@ class FightSystem:
         self.fight_active = False
 
 
+
     def start_fight(self):
         """Начинает бой с врагом указанного уровня"""
         self.enemy.generate()
         self.fight_log = [f"Началась битва с {self.enemy.name}!"]
         self.fight_active = True
         self.player_turn = True
-        return self.enemy
+        return self.enemy # А это вообще надо?
 
     def player_attack(self):
 
@@ -344,6 +358,7 @@ class WorldView(arcade.View):
         self.game_window = game_window
         self.world = World2D()
         self.fight_system = FightSystem()
+        self.event_system = EventSystem()
         self.player = player
         # UI менеджер для кнопок боя
         self.manager = arcade.gui.UIManager()
@@ -354,10 +369,41 @@ class WorldView(arcade.View):
 
         # Состояние просмотра мира
         self.in_fight = False
+        self.in_event = False
         self.current_location = None
+
+        # UI менеджер для ивентов
+        self.eventmanager = arcade.gui.UIManager()
+        self.eventmanager.enable()
+
 
         # Настройка UI боя
         self.setup_fight_ui()
+        self.setup_event_ui()
+
+    # Обработчики кнопок боя # Разве это нельзя вписать напрямую в setup_fight_ui?
+    def on_attack_click(self, event):
+        if self.fight_system.player_turn:
+            self.fight_system.player_attack()
+
+    def on_power_attack_click(self, event):
+        if self.fight_system.player_turn:
+            self.fight_system.player_power_attack()
+
+    def on_block_click(self, event):
+        if self.fight_system.player_turn:
+            self.fight_system.player_block()
+
+    def on_counter_click(self, event):
+        if self.fight_system.player_turn:
+            self.fight_system.player_counter()
+
+    def on_flee_click(self, event):
+        if self.fight_system.player_turn:
+            self.fight_system.player_flee()
+    def on_continue_click (self, event):
+        if self.in_event:
+            pass ###ДОПИСАТЬ КНОПКУ ИВЕНТА!!!
 
     def setup_fight_ui(self):
         """Настройка UI для боевой системы"""
@@ -417,6 +463,33 @@ class WorldView(arcade.View):
 
         self.manager.add(self.fight_anchor)
         self.fight_anchor.visible = False
+
+    def setup_event_ui(self):    ###ДОБАВИТЬ КНОПКИ!!
+        self.event_panel = arcade.gui.UIBoxLayout(vertical=True, space_between=10)
+        button_style = {
+            "font_name": ("calibri", "arial"),
+            "font_size": 12,
+            "font_color": arcade.color.WHITE,
+            "border_width": 2,
+            "border_color": arcade.color.WHITE,
+            "bg_color": arcade.color.DARK_BLUE,
+            "bg_color_pressed": arcade.color.BLUE,
+        }
+        self.continue_button = arcade.gui.UIFlatButton(
+            text="Продолжить", width=100, height=35, style=button_style
+        )
+
+
+
+
+        self.event_anchor = arcade.gui.UIAnchorWidget(
+            anchor_x="right",
+            anchor_y="center",
+            align_x=-20,
+            child=self.fight_panel
+        )
+        self.eventmanager.add(self.event_anchor)
+        self.event_anchor.visible = False ##№№###ДОБАВИТЬ КНОАКИ!!
 
     def on_draw(self):
         arcade.start_render()
@@ -522,6 +595,39 @@ class WorldView(arcade.View):
         arcade.draw_text(turn_text, panel_x, panel_y - 120,
                          turn_color, 14, anchor_x="center")
 
+    def draw_event_ui(self):
+        """Рисует интерфейс боя"""
+        if not self.event_system.event_active:
+            return
+
+        # Панель ивента
+        fight_panel_width = 400
+        fight_panel_height = 300
+        panel_x = self.window.width // 2
+        panel_y = self.window.height // 2
+
+        # Фон панели
+        arcade.draw_rectangle_filled(
+            panel_x, panel_y, fight_panel_width, fight_panel_height,
+            arcade.color.BLACK + (200,)
+        )
+        arcade.draw_rectangle_outline(
+            panel_x, panel_y, fight_panel_width, fight_panel_height,
+            arcade.color.WHITE, 2
+        )
+
+        # Вводное описание ивента
+        event = self.event_system.event
+        if event:
+            y_offset = panel_y + 100
+            arcade.draw_text("1",
+                             panel_x, y_offset, arcade.color.RED, 16, anchor_x="center")
+        # Лог боя
+        # log_y = panel_y - 20
+        # for i, log_entry in enumerate(self.event_system.event_log[-4:]):
+        #     arcade.draw_text(log_entry, panel_x, log_y - i * 20,
+        #                      arcade.color.YELLOW, 10, anchor_x="center")
+
     def draw_minimap(self):
         """Рисует миникарту в правом верхнем углу"""
         minimap_size = 150
@@ -572,7 +678,6 @@ class WorldView(arcade.View):
             dx = 1
 
         if not self.in_fight and (dx != 0 or dy != 0):
-            print(f"Moving dx={dx}, dy={dy}")
             self.world.move_player(dx, dy)
             self.world.discover_nearby_locations()
 
@@ -587,7 +692,6 @@ class WorldView(arcade.View):
 
     def on_key_press(self, key, modifiers):
         self.keys_pressed.add(key)
-        print("Key pressed:", key)  # Тест
 
         # Взаимодействие с локациями
         if key == arcade.key.E and not self.in_fight:
@@ -598,7 +702,6 @@ class WorldView(arcade.View):
             self.end_fight()
 
     def on_key_release(self, key, modifiers):
-        print("Key unpressed:", key)  # Тест
         if key in self.keys_pressed:
             self.keys_pressed.remove(key)
 
@@ -642,38 +745,28 @@ class WorldView(arcade.View):
         if hasattr(self.game_window, 'play_music'):
             self.game_window.play_music("ambient")
 
-    def handle_healing(self, location):
+    def end_event(self):
+        self.in_event = False
+        self.event_anchor.visible = False
+        if hasattr(self.game_window, 'play_music'):
+            self.game_window.play_music("ambient")
+
+    def starthandle_healing(self, location):
         """Обрабатывает событие исцеления"""
-        heal_amount = random.randint(5, 15)
-        old_health = self.game_window.health
-        self.game_window.health = min(self.game_window.maxhealth,
-                                      self.game_window.health + heal_amount)
-        actual_heal = self.game_window.health - old_health
+        heal_amount = random.randint(30, 50)
+        old_health = player.health
+        player.health = min(player.maxhealth,
+                                      player.health + heal_amount)
+        actual_heal = player.health - old_health
 
         self.game_window.narrative_text.append(
             f"Ты восстанавливаешь {actual_heal} здоровья в {location.name}"
         )
 
-    def handle_treasure(self, location):
-        """Обрабатывает событие сокровища"""
-        treasure_type = random.choice(["money", "item", "both"])
+    def start_handle_treasure(self, location):
 
-        if treasure_type in ["money", "both"]:
-            gold = random.randint(20, 100)
-            player.money += gold
-            self.game_window.narrative_text.append(f"Ты находишь {gold} золота!")
 
-        if treasure_type in ["item", "both"]:
-            items = [
-                Potion("Большое зелье здоровья"),
-                Weapon(f"Магическое оружие"),
-                Armor(f"Зачарованная броня")
-            ]
-            item = random.choice(items)
-            self.game_window.inventory.append(item)
-            self.game_window.narrative_text.append(f"Ты находишь {item.name}!")
-
-    def handle_shop(self, location):
+    def start_handle_shop(self, location):
         """Обрабатывает событие магазина"""
         # Здесь можно добавить полноценный интерфейс магазина
         self.game_window.narrative_text.append(f"Добро пожаловать в {location.name}!")
@@ -699,26 +792,7 @@ class WorldView(arcade.View):
         else:
             self.game_window.narrative_text.append("У тебя недостаточно золота для покупок")
 
-    # Обработчики кнопок боя
-    def on_attack_click(self, event):
-        if self.fight_system.player_turn:
-            self.fight_system.player_attack()
 
-    def on_power_attack_click(self, event):
-        if self.fight_system.player_turn:
-            self.fight_system.player_power_attack()
-
-    def on_block_click(self, event):
-        if self.fight_system.player_turn:
-            self.fight_system.player_block()
-
-    def on_counter_click(self, event):
-        if self.fight_system.player_turn:
-            self.fight_system.player_counter()
-
-    def on_flee_click(self, event):
-        if self.fight_system.player_turn:
-            self.fight_system.player_flee()
 
 
 # Дополнительные классы для интеграции с основной игрой

@@ -187,7 +187,7 @@ class Game(arcade.View):
             style=button_style
         )
         self.yes_button.on_click = self.on_yes_click
-        self.yes_button.visible = False
+        self.yes_button.visible = False #не влияет на код, заместо этого можно сделать прозрачной
 
         # Кнопка "Войти в мир"
         self.world_button = arcade.gui.UIFlatButton(
@@ -475,7 +475,7 @@ class Game(arcade.View):
 
     def handle_yes(self):
         self.narrative_text.append("Ты ответила 'Да'")
-        self.yes_button.setVisible(False)
+        self.yes_button.visible = True
 
         if self.current_event == self.events[8]:
             self.meettrollshop()
