@@ -1,5 +1,7 @@
 import arcade
 import arcade.gui
+from arcade.gui import UIFlatButton
+from arcade.gui.widgets.buttons import UIFlatButton
 import random
 import math
 from enum import Enum
@@ -174,6 +176,7 @@ class EventSystem:
 
     def end_event(self):
         self.event_active = False
+
 class FightSystem:
     def __init__(self):
         self.enemy = Enemy()
@@ -372,11 +375,6 @@ class WorldView(arcade.View):
         self.in_event = False
         self.current_location = None
 
-        # UI менеджер для ивентов
-        self.eventmanager = arcade.gui.UIManager()
-        self.eventmanager.enable()
-
-
         # Настройка UI боя
         self.setup_fight_ui()
         self.setup_event_ui()
@@ -410,39 +408,32 @@ class WorldView(arcade.View):
         # Создаем панель кнопок боя
         self.fight_panel = arcade.gui.UIBoxLayout(vertical=True, space_between=10)
 
-        button_style = {
-            "font_name": ("calibri", "arial"),
-            "font_size": 12,
-            "font_color": arcade.color.WHITE,
-            "border_width": 2,
-            "border_color": arcade.color.WHITE,
-            "bg_color": arcade.color.DARK_BLUE,
-            "bg_color_pressed": arcade.color.BLUE,
-        }
+        # Получаем дефолтный стиль и модифицируем его
+        default_style = arcade.gui.UIFlatButton.DEFAULT_STYLE
 
-        # Кнопки действий в бою
+        # Создаем кнопки с дефолтным стилем
         self.attack_button = arcade.gui.UIFlatButton(
-            text="Атака", width=100, height=35, style=button_style
+            text="Атака", width=100, height=35, style=default_style
         )
         self.attack_button.on_click = self.on_attack_click
 
         self.power_attack_button = arcade.gui.UIFlatButton(
-            text="Мощная атака", width=100, height=35, style=button_style
+            text="Мощная атака", width=100, height=35, style=default_style
         )
         self.power_attack_button.on_click = self.on_power_attack_click
 
         self.block_button = arcade.gui.UIFlatButton(
-            text="Блок", width=100, height=35, style=button_style
+            text="Блок", width=100, height=35, style=default_style
         )
         self.block_button.on_click = self.on_block_click
 
         self.counter_button = arcade.gui.UIFlatButton(
-            text="Контратака", width=100, height=35, style=button_style
+            text="Контратака", width=100, height=35, style=default_style
         )
         self.counter_button.on_click = self.on_counter_click
 
         self.flee_button = arcade.gui.UIFlatButton(
-            text="Побег", width=100, height=35, style=button_style
+            text="Побег", width=100, height=35, style=default_style
         )
         self.flee_button.on_click = self.on_flee_click
 
@@ -454,7 +445,7 @@ class WorldView(arcade.View):
         self.fight_panel.add(self.flee_button)
 
         # Позиционируем панель
-        self.fight_anchor = arcade.gui.UIAnchorWidget(
+        self.fight_anchor = arcade.gui.UIAnchorLayout(
             anchor_x="right",
             anchor_y="center",
             align_x=-20,
@@ -464,44 +455,41 @@ class WorldView(arcade.View):
         self.manager.add(self.fight_anchor)
         self.fight_anchor.visible = False
 
-    def setup_event_ui(self):    ###ДОБАВИТЬ КНОПКИ!!
+    def setup_event_ui(self):
+        """Настройка UI для событий"""
         self.event_panel = arcade.gui.UIBoxLayout(vertical=True, space_between=10)
-        button_style = {
-            "font_name": ("calibri", "arial"),
-            "font_size": 12,
-            "font_color": arcade.color.WHITE,
-            "border_width": 2,
-            "border_color": arcade.color.WHITE,
-            "bg_color": arcade.color.DARK_BLUE,
-            "bg_color_pressed": arcade.color.BLUE,
-        }
+
+        # Создаем кнопку продолжить
         self.continue_button = arcade.gui.UIFlatButton(
-            text="Продолжить", width=100, height=35, style=button_style
+            text="Продолжить", width=100, height=35
         )
+        self.continue_button.on_click = self.on_continue_click
 
+        self.event_panel.add(self.continue_button)
 
-
-
-        self.event_anchor = arcade.gui.UIAnchorWidget(
+        # Создаем якорь с правильной панелью
+        self.event_anchor = arcade.gui.UIAnchorLayout(
             anchor_x="right",
             anchor_y="center",
             align_x=-20,
-            child=self.fight_panel
+            child=self.event_panel
         )
-        self.eventmanager.add(self.event_anchor)
-        self.event_anchor.visible = False ##№№###ДОБАВИТЬ КНОАКИ!!
+
+        # Добавляем в тот же менеджер
+        self.manager.add(self.event_anchor)
+        self.event_anchor.visible = False
 
     def on_draw(self):
-        arcade.start_render()
+        self.clear()
 
         # Вычисляем смещение камеры
         camera_x = self.world.player_x - self.window.width // 2
         camera_y = self.world.player_y - self.window.height // 2
 
         # Рисуем фон
-        arcade.draw_rectangle_filled(
-            self.window.width // 2, self.window.height // 2,
-            self.window.width, self.window.height,
+        arcade.draw_lbwh_rectangle_filled(
+            0, 0,  # left, bottom
+            self.window.width, self.window.height,  # width, height
             arcade.color.DARK_GREEN
         )
 
@@ -543,6 +531,9 @@ class WorldView(arcade.View):
         if self.in_fight:
             self.draw_fight_ui()
 
+        if self.in_event:
+            self.draw_event_ui()
+
         # Рисуем миникарту
         self.draw_minimap()
 
@@ -560,13 +551,19 @@ class WorldView(arcade.View):
         panel_x = self.window.width // 2
         panel_y = self.window.height // 2
 
+        panel_left = panel_x - fight_panel_width // 2
+        panel_bottom = panel_y - fight_panel_height // 2
+
         # Фон панели
-        arcade.draw_rectangle_filled(
-            panel_x, panel_y, fight_panel_width, fight_panel_height,
-            arcade.color.BLACK + (200,)
+        arcade.draw_lbwh_rectangle_filled(
+            panel_left, panel_bottom,
+            fight_panel_width, fight_panel_height,
+            (0, 0, 0, 150)  # Black with alpha 150
         )
-        arcade.draw_rectangle_outline(
-            panel_x, panel_y, fight_panel_width, fight_panel_height,
+        # Контур прямоугольника
+        arcade.draw_lbwh_rectangle_outline(
+            panel_left, panel_bottom,
+            fight_panel_width, fight_panel_height,
             arcade.color.WHITE, 2
         )
 
@@ -606,13 +603,19 @@ class WorldView(arcade.View):
         panel_x = self.window.width // 2
         panel_y = self.window.height // 2
 
+        panel_left = panel_x - fight_panel_width // 2
+        panel_bottom = panel_y - fight_panel_height // 2
+
         # Фон панели
-        arcade.draw_rectangle_filled(
-            panel_x, panel_y, fight_panel_width, fight_panel_height,
-            arcade.color.BLACK + (200,)
+        arcade.draw_lbwh_rectangle_filled(
+            panel_left, panel_bottom,
+            fight_panel_width, fight_panel_height,
+            (0, 0, 0, 150)  # Black with alpha 150
         )
-        arcade.draw_rectangle_outline(
-            panel_x, panel_y, fight_panel_width, fight_panel_height,
+        # Контур прямоугольника
+        arcade.draw_lbwh_rectangle_outline(
+            panel_left, panel_bottom,
+            fight_panel_width, fight_panel_height,
             arcade.color.WHITE, 2
         )
 
@@ -634,13 +637,20 @@ class WorldView(arcade.View):
         minimap_x = self.window.width - minimap_size // 2 - 10
         minimap_y = self.window.height - minimap_size // 2 - 10
 
-        # Фон миникарты
-        arcade.draw_rectangle_filled(
-            minimap_x, minimap_y, minimap_size, minimap_size,
-            arcade.color.BLACK + (150,)
+        minimap_left = minimap_x - minimap_size // 2
+        minimap_bottom = minimap_y - minimap_size // 2
+
+        # Закрашенный прямоугольник
+        arcade.draw_lbwh_rectangle_filled(
+            minimap_left, minimap_bottom,
+            minimap_size, minimap_size,
+            (0, 0, 0, 150)  # Black with alpha 150
         )
-        arcade.draw_rectangle_outline(
-            minimap_x, minimap_y, minimap_size, minimap_size,
+
+        # Контур прямоугольника
+        arcade.draw_lbwh_rectangle_outline(
+            minimap_left, minimap_bottom,
+            minimap_size, minimap_size,
             arcade.color.WHITE, 1
         )
 
@@ -764,6 +774,7 @@ class WorldView(arcade.View):
         )
 
     def start_handle_treasure(self, location):
+        pass
 
 
     def start_handle_shop(self, location):
@@ -856,7 +867,7 @@ class WorldIntegratedGame(arcade.View):
         world_button.on_click = self.on_world_button_click
 
         # Добавляем кнопку в UI менеджер основной игры
-        world_anchor = arcade.gui.UIAnchorWidget(
+        world_anchor = arcade.gui.UIAnchorLayout(
             anchor_x="left",
             anchor_y="bottom",
             align_x=20,

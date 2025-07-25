@@ -141,10 +141,9 @@ class Game(arcade.View):
         self.current_music = music_type
         try:
             sound = arcade.load_sound(self.music[music_type])
-            self.music_player = arcade.play_sound(
-                sound,
-                looping=True,  # Зацикливаем музыку
-                volume=0.1  # Громкость (0.0-1.0) # Блин вот бы еще регулировку сделать
+            self.music_player = sound.play(
+                volume=0.1,
+                loop=True
             )
         except Exception as e:
             print(f"Ошибка при загрузке музыки: {e}")
@@ -175,7 +174,7 @@ class Game(arcade.View):
             text="Продолжить",
             width=120,
             height=40,
-            style=button_style
+            style=None
         )
         self.continue_button.on_click = self.on_continue_click
 
@@ -184,7 +183,7 @@ class Game(arcade.View):
             text="Да",
             width=80,
             height=40,
-            style=button_style
+            style=None
         )
         self.yes_button.on_click = self.on_yes_click
         self.yes_button.visible = False #не влияет на код, заместо этого можно сделать прозрачной
@@ -194,7 +193,7 @@ class Game(arcade.View):
             text="Войти в мир",
             width=120,
             height=40,
-            style=button_style
+            style=None
         )
         self.world_button.on_click = self.on_world_button_click
 
@@ -204,12 +203,12 @@ class Game(arcade.View):
         self.button_panel.add(self.world_button)
 
         # Создаем контейнер для кнопок внизу экрана
-        self.button_anchor = arcade.gui.UIAnchorWidget(
+        self.button_anchor = arcade.gui.UIAnchorLayout(
             anchor_x="right",
             anchor_y="bottom",
             align_x=-20,
             align_y=20,
-            child=self.button_panel
+            children=self.button_panel
         )
 
         self.manager.add(self.button_anchor)
@@ -294,12 +293,17 @@ class Game(arcade.View):
             x = (window_width - draw_width) / 2
             y = 0
 
-        arcade.draw_lrwh_rectangle_textured(
-            x, y, draw_width, draw_height, texture
+        arcade.draw_lbwh_rectangle_outline(
+            left=x,
+            bottom=y,
+            width=self.window.width,
+            height=self.window.height,
+            color=arcade.color.WHITE,
+            border_width=2
         )
 
     def on_draw(self):
-        arcade.start_render()
+        self.clear()
         if self.in_world_mode and self.world_view:
             self.world_view.on_draw()
             return
@@ -308,7 +312,7 @@ class Game(arcade.View):
         if self.background:
             self.draw_background_cover(self.background, self.window.width, self.window.height)
         else:
-            arcade.draw_rectangle_filled(self.window.width // 2, self.window.height // 2,
+            arcade.draw_lbwh_rectangle_outline(self.window.width // 2, self.window.height // 2,
                                          self.window.width, self.window.height,
                                          arcade.color.DARK_GREEN)
 
@@ -317,8 +321,13 @@ class Game(arcade.View):
 
         # Панель статистики
         stats_width = screen_width * 0.35
-        arcade.draw_rectangle_filled(stats_width / 2, screen_height / 2, stats_width, screen_height,
-                                     arcade.color.BLACK + (100,))
+        arcade.draw_lrbt_rectangle_filled(
+            left=0,
+            right=self.window.width,
+            bottom=0,
+            top=self.window.height,
+            color=arcade.color.DARK_GREEN
+        )
 
         # Масштабирование шрифтов
         scale_factor = min(screen_width / MIN_SCREEN_WIDTH, screen_height / MIN_SCREEN_HEIGHT)

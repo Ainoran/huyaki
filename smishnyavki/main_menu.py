@@ -1,12 +1,10 @@
 import arcade
 import arcade.gui
 from main_scene import Game
-
 class MainMenuView(arcade.View):
     def __init__(self, window):
         super().__init__(window)
         self.manager = arcade.gui.UIManager()
-        self.manager.enable()
 
         # Кнопки
         self.vbox = arcade.gui.UIBoxLayout(space_between=20)
@@ -23,10 +21,16 @@ class MainMenuView(arcade.View):
         self.quit_button.on_click = self.on_quit_click
         self.vbox.add(self.quit_button)
 
-        self.anchor = arcade.gui.UIAnchorWidget(
-            anchor_x="center", anchor_y="center", child=self.vbox
+        # В новой версии используется UIAnchorLayout
+        self.manager.add(
+            arcade.gui.UIAnchorLayout(
+                children=[self.vbox],
+                # позиционирование:
+                # anchor_x="center_x", anchor_y="center_y" - по центру (по умолчанию)
+                # anchor_x="left", anchor_y="top" - левый верхний угол
+                # anchor_x="right", anchor_y="bottom" - правый нижний угол
+            )
         )
-        self.manager.add(self.anchor)
 
     def on_show_view(self):
         arcade.set_background_color(arcade.color.BLACK)
@@ -36,11 +40,17 @@ class MainMenuView(arcade.View):
         self.manager.disable()
 
     def on_draw(self):
-        arcade.start_render()
-        arcade.draw_text("Главное меню", self.window.width // 2, self.window.height - 100,
-                         arcade.color.WHITE, font_size=32, anchor_x="center")
-        self.manager.draw()
+        # В новой версии используется self.clear() вместо arcade.start_render()
+        self.clear()
 
+        arcade.draw_text("Главное меню",
+                         self.window.width // 2,
+                         self.window.height - 100,
+                         arcade.color.WHITE,
+                         font_size=32,
+                         anchor_x="center")
+
+        self.manager.draw()
 
     def on_play_click(self, event):
         game = Game(self.window)
