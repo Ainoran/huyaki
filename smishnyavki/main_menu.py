@@ -1,6 +1,7 @@
 import arcade
 import arcade.gui
 from main_scene import Game
+from settings import SettingsView
 class MainMenuView(arcade.View):
     def __init__(self, window):
         super().__init__(window)
@@ -52,12 +53,20 @@ class MainMenuView(arcade.View):
 
         self.manager.draw()
 
+    def on_key_press(self, key, modifiers):
+        """Обработка нажатий клавиш"""
+        if key == arcade.key.ESCAPE:
+            # Открываем настройки
+            settings_view = SettingsView(self)
+            self.window.show_view(settings_view)
+
     def on_play_click(self, event):
         game = Game(self.window)
         self.window.show_view(game)
 
     def on_settings_click(self, event):
-        print("Настройки пока не реализованы")
+        settings_view = SettingsView(self)
+        self.window.show_view(settings_view)
 
     def on_quit_click(self, event):
         arcade.close_window()

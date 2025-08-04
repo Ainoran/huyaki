@@ -10,6 +10,9 @@ from armor import Armor
 from playerdata import player
 from world import WorldManager
 
+# Глобальные настройки
+GAME_VOLUME = 0.5
+
 # Константы
 MIN_SCREEN_WIDTH = 800
 MIN_SCREEN_HEIGHT = 600
@@ -141,12 +144,20 @@ class Game(arcade.View):
         self.current_music = music_type
         try:
             sound = arcade.load_sound(self.music[music_type])
+            # Получаем текущую громкость из глобальных настроек
+            global GAME_VOLUME
             self.music_player = sound.play(
-                volume=0.1,
+                volume=GAME_VOLUME,
                 loop=True
             )
         except Exception as e:
             print(f"Ошибка при загрузке музыки: {e}")
+
+    def update_music_volume(self):
+        """Обновляет громкость текущей музыки"""
+        if self.music_player:
+            global GAME_VOLUME
+            self.music_player.volume = GAME_VOLUME
 
     def setup_ui(self):
         """Настройка UI элементов"""
@@ -419,6 +430,13 @@ class Game(arcade.View):
         self.handle_yes()
 
     def on_key_press(self, key, modifiers):
+        if key == arcade.key.ESCAPE:
+            # Открываем настройки
+            from settings import SettingsView
+            settings_view = SettingsView(self)
+            self.window.show_view(settings_view)
+            return
+            
         if not self.game_started:
             if key == arcade.key.ENTER:
 
