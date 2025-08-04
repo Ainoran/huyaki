@@ -100,6 +100,11 @@ class Game(arcade.View):
         self.fighthealing = 0
         self.inventory = []
         self.username = player.name
+        
+        # Система оружия
+        self.weapons = []  # Список доступного оружия
+        self.equipped_weapon = None  # Экипированное оружие
+        self.weapon_selection_mode = False  # Режим выбора оружия
 
         # Список событий (mv1-mv20)
         self.events = [
@@ -208,10 +213,20 @@ class Game(arcade.View):
         )
         self.world_button.on_click = self.on_world_button_click
 
+        # Кнопка "Получить оружие"
+        self.weapon_button = arcade.gui.UIFlatButton(
+            text="Получить оружие",
+            width=120,
+            height=40,
+            style=None
+        )
+        self.weapon_button.on_click = self.on_weapon_button_click
+
         # Добавляем кнопки в панель
         self.button_panel.add(self.continue_button)
         self.button_panel.add(self.yes_button)
         self.button_panel.add(self.world_button)
+        self.button_panel.add(self.weapon_button)
 
         # Создаем контейнер для кнопок внизу экрана
         self.button_anchor = arcade.gui.UIAnchorLayout(
@@ -226,6 +241,9 @@ class Game(arcade.View):
 
         # Создаем панель для инвентаря
         self.setup_inventory_ui()
+        
+        # Создаем панель для оружия
+        self.setup_weapon_ui()
 
     def setup_inventory_ui(self):
         """Настройка UI инвентаря"""
@@ -272,6 +290,49 @@ class Game(arcade.View):
 
             self.manager.add(button_anchor)
             self.inventory_buttons.append(use_button)
+
+    def setup_weapon_ui(self):
+        """Настройка UI оружия"""
+        # Удаляем старые кнопки оружия
+        if hasattr(self, 'weapon_buttons'):
+            for button in self.weapon_buttons:
+                if hasattr(button, 'parent') and button.parent:
+                    self.manager.remove(button.parent)
+        else:
+            self.weapon_buttons = []
+
+        # Создаем кнопки для каждого оружия
+        for i, weapon in enumerate(self.weapons):
+            # Создаем текст кнопки
+            button_text = f"Экип. {weapon.name}"
+            if weapon == self.equipped_weapon:
+                button_text += " ✓"
+            
+            equip_button = arcade.gui.UIFlatButton(
+                text=button_text,
+                width=120,
+                height=30
+            )
+
+            # Создаем замыкание для сохранения индекса
+            def make_equip_handler(index):
+                def handler(event):
+                    self.equip_weapon(index)
+                return handler
+
+            equip_button.on_click = make_equip_handler(i)
+
+            # Позиционируем кнопку
+            button_anchor = arcade.gui.UIAnchorLayout(
+                anchor_x="right",
+                anchor_y="top",
+                align_x=-150,
+                align_y=-(220 + i * 35),
+                children=[equip_button]
+            )
+
+            self.manager.add(button_anchor)
+            self.weapon_buttons.append(equip_button)
 
     def setup(self):
         self.narrative_text = [f"{self.username} ты проснулась на опушке леса и пошла куда глаза глядят"]
@@ -358,6 +419,11 @@ class Game(arcade.View):
         y -= screen_height * 0.05
         arcade.draw_text(f"Шанс крита: {player.critch}%", 20, y, arcade.color.WHITE, font_size_stats)
         y -= screen_height * 0.05
+        if self.equipped_weapon:
+            arcade.draw_text(f"Оружие: {self.equipped_weapon.name}", 20, y, arcade.color.YELLOW, font_size_stats)
+        else:
+            arcade.draw_text("Оружие: Нет", 20, y, arcade.color.GRAY, font_size_stats)
+        y -= screen_height * 0.05
         arcade.draw_text(f"Броня: {player.armor}", 20, y, arcade.color.WHITE, font_size_stats)
 
         # Инвентарь
@@ -368,6 +434,17 @@ class Game(arcade.View):
             if y < screen_height * 0.1:
                 break
             arcade.draw_text(str(item), 20, y, arcade.color.WHITE, font_size_stats)
+            y -= screen_height * 0.05
+
+        # Оружие
+        y -= screen_height * 0.05
+        arcade.draw_text("Оружие:", 20, y, COLOR_PLAYER, font_size_stats, bold=True)
+        y -= screen_height * 0.05
+        for i, weapon in enumerate(self.weapons):
+            if y < screen_height * 0.1:
+                break
+            color = arcade.color.YELLOW if weapon == self.equipped_weapon else arcade.color.WHITE
+            arcade.draw_text(str(weapon), 20, y, color, font_size_stats)
             y -= screen_height * 0.05
 
         # Панель сюжета
@@ -425,6 +502,11 @@ class Game(arcade.View):
         """Обработчик кнопки входа в мир"""
         self.world_manager.enter_world_mode()
 
+    def on_weapon_button_click(self, event):
+        """Обработчик кнопки получения оружия"""
+        weapon = self.generate_random_weapon()
+        self.add_weapon_to_inventory(weapon)
+
     def on_yes_click(self, event):
         """Обработчик нажатия кнопки 'Да'"""
         self.handle_yes()
@@ -460,6 +542,32 @@ class Game(arcade.View):
             if isinstance(item, Potion):
                 self.inventory.pop(index)
             self.setup_inventory_ui()  # Обновляем кнопки инвентаря
+
+    def generate_random_weapon(self):
+        """Генерирует случайное оружие"""
+        import random
+        weapon_types = ['melee', 'longmelee', 'range', 'magic', 'specific', 'differentive']
+        weapon_type = random.choice(weapon_types)
+        
+        weapon = Weapon(weapontype=weapon_type)
+        weapon.generate()
+        
+        return weapon
+
+    def add_weapon_to_inventory(self, weapon):
+        """Добавляет оружие в инвентарь"""
+        self.weapons.append(weapon)
+        self.narrative_text.append(f"Получено оружие: {weapon}")
+        self.setup_weapon_ui()
+
+    def equip_weapon(self, weapon_index):
+        """Экипирует оружие"""
+        if 0 <= weapon_index < len(self.weapons):
+            weapon = self.weapons[weapon_index]
+            self.equipped_weapon = weapon
+            player.damage = weapon.damage
+            self.narrative_text.append(f"Экипировано: {weapon.name} (Урон: {weapon.damage:.1f})")
+            self.setup_weapon_ui()
 
     def handle_continue(self):
         if not self.game_started:
